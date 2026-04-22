@@ -23,7 +23,7 @@ export const register = async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
@@ -67,7 +67,7 @@ export const login = async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -130,8 +130,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { ...(name && { name }) },
-      { new: true }
+      { ...(name && { name }) }
     );
 
     res.json(user);

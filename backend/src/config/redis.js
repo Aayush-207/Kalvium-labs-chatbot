@@ -12,10 +12,16 @@ redisClient.on('connect', () => console.log('Redis connected'));
 
 const connectRedis = async () => {
   try {
-    await redisClient.connect();
+    const connectPromise = redisClient.connect();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Redis connection timeout')), 5000)
+    );
+    await Promise.race([connectPromise, timeoutPromise]);
   } catch (error) {
-    console.error('Redis connection error:', error);
-    process.exit(1);
+    console.warn('⚠️  Redis connection warning:', error.message);
+    console.warn('⚠️  Rate limiting and queue features will not work without Redis');
+    console.warn('⚠️  To use Redis, install it or use: docker run -d -p 6379:6379 redis:latest');
+    // Don't exit - allow server to start without Redis for development
   }
 };
 

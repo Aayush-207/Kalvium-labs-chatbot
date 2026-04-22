@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "_id": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "name": "Aayush",
+      "email": "abc@gmail.com",
+      "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+      "photoURL": null,
+      "createdAt": "2026-04-22T11:18:46.869Z",
+      "lastActivityAt": "2026-04-22T11:18:46.869Z",
+      "updatedAt": "2026-04-22T11:18:46.869Z"
+    }
+  ],
+  "messages": []
+}

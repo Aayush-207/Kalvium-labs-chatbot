@@ -113,16 +113,17 @@ export const getChatHistory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const skip = parseInt(req.query.skip) || 0;
 
-    const messages = await Message.find({ userId })
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .skip(skip)
-      .lean();
+    // Get all messages for user, sorted by timestamp descending
+    const allMessages = await Message.find({ userId });
+    const total = allMessages.length;
 
-    const total = await Message.countDocuments({ userId });
+    // Apply pagination
+    const messages = allMessages
+      .slice(skip, skip + limit)
+      .reverse(); // Reverse to get chronological order
 
     res.json({
-      messages: messages.reverse(), // Reverse to get chronological order
+      messages,
       total,
       limit,
       skip,
@@ -142,12 +143,9 @@ export const getMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    const message = await Message.findOne({
-      _id: messageId,
-      userId,
-    });
+    const message = await Message.findById(messageId);
 
-    if (!message) {
+    if (!message || message.userId !== userId) {
       return res.status(404).json({ error: 'Message not found' });
     }
 

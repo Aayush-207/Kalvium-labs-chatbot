@@ -24,7 +24,7 @@
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Login Page          │ Chat Page                      │   │
 │  │ - Google Auth       │ - Message Display              │   │
-│  │ - Firebase SignIn   │ - Input Box                    │   │
+│  │ - Email/Password  │ - Input Box                    │   │
 │  │                     │ - Polling for Bot Response     │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────┬──────────────────────────────────────┘
@@ -79,19 +79,22 @@
 
 #### 1. **LoginForm Component**
 - **Location**: `src/components/LoginForm.js`
-- **Responsibility**: Handle Google authentication via Firebase
+- **Responsibility**: Handle user registration and login with JWT
 - **Features**:
-  - Google Sign-In button
-  - Token management
+  - Email/password registration
+  - Email/password login
+  - Form validation
   - Error handling
+  - Token management
   - Redirect to chat on success
 - **Flow**:
   ```
-  User clicks "Sign in with Google"
-  → Firebase popup
-  → Get ID token
+  User enters email/password
+  → Toggle between register/login
+  → POST to /api/auth/register or /api/auth/login
+  → Receive JWT token
   → Save to localStorage
-  → Verify with backend
+  → Verify with /api/auth/me
   → Redirect to /chat
   ```
 
@@ -194,7 +197,7 @@ clearQueue()                    // Admin function
                              │
                     ┌────────▼──────────────┐
                     │  POST /api/chat/send  │
-                    │  + Firebase ID Token  │
+                    │  + JWT Token          │
                     └────────┬──────────────┘
                              │
         ┌────────────────────▼──────────────────────┐
@@ -202,7 +205,7 @@ clearQueue()                    // Admin function
         └────────────────────┬──────────────────────┘
                              │
         ┌────────────────────▼──────────────────────┐
-        │  1. Verify Firebase Token                 │
+        │  1. Verify JWT Token                      │
         │  2. Validate message (not empty, <1000)   │
         │  3. Check cooldown status                 │
         │  4. Check rate limit (5/min)              │
@@ -447,17 +450,15 @@ logMessageAction(userId, action, details) {
 ```javascript
 {
   _id: ObjectId,
-  firebaseUid: String,          // Firebase unique identifier
   name: String,                 // User display name
   email: String,                // Email (unique)
-  photoURL: String,             // Google profile picture
+  password: String,             // Hashed password (SHA256)
   createdAt: Date,              // Account creation
   lastActivityAt: Date,         // Last message activity
   updatedAt: Date               // Last profile update
 }
 
 // Indexes:
-// - firebaseUid (unique)
 // - email (unique)
 ```
 
@@ -488,15 +489,38 @@ logMessageAction(userId, action, details) {
 
 ### Authentication Endpoints
 
-#### 1. Verify Firebase Token
+#### 1. Register User
 ```
-POST /api/auth/verify
-Headers: Authorization: Bearer {idToken}
+POST /api/auth/register
+Body: {
+  name: string,
+  email: string,
+  password: string
+}
 Response: {
   success: boolean,
+  token: string,  // JWT token
   user: {
     _id: ObjectId,
-    firebaseUid: string,
+    name: string,
+    email: string
+  }
+}
+Status: 201 | 400 | 500
+```
+
+#### 2. Login User
+```
+POST /api/auth/login
+Body: {
+  email: string,
+  password: string
+}
+Response: {
+  success: boolean,
+  token: string,  // JWT token
+  user: {
+    _id: ObjectId,
     name: string,
     email: string
   }
@@ -504,23 +528,21 @@ Response: {
 Status: 200 | 401 | 500
 ```
 
-#### 2. Get Current User
+#### 3. Get Current User
 ```
 GET /api/auth/me
-Headers: Authorization: Bearer {idToken}
+Headers: Authorization: Bearer {jwtToken}
 Response: {
   _id: ObjectId,
-  firebaseUid: string,
   name: string,
   email: string,
-  photoURL: string,
   createdAt: Date,
   lastActivityAt: Date
 }
 Status: 200 | 401 | 404 | 500
 ```
 
-#### 3. Update Profile
+#### 4. Update Profile
 ```
 PUT /api/auth/profile
 Headers: Authorization: Bearer {idToken}
@@ -631,14 +653,14 @@ Status: 200 | 500
 
 ## Security Considerations
 
-### 1. **Firebase Authentication**
-- ID tokens verified server-side
-- Tokens have 1-hour expiration
-- Refresh tokens handled by SDK
-- Tokens included in all requests
+### 1. **JWT Authentication**
+- Tokens signed with JWT_SECRET (HS256)
+- Tokens have 7-day expiration
+- Passwords hashed with SHA256
+- Tokens included in Authorization header
 
 ### 2. **Authorization**
-- All chat/auth routes require valid token
+- All chat/auth routes require valid JWT
 - Users can only access own messages
 - User ID verified from token, not request body
 
@@ -653,8 +675,8 @@ Status: 200 | 500
 - Cooldown prevents bulk spam
 
 ### 5. **Data Privacy**
-- No passwords stored
-- Firebase handles sensitive auth data
+- Passwords hashed with SHA256
+- JWT tokens signed with secret
 - Messages encrypted in transit (HTTPS)
 - Database encryption at rest (MongoDB Atlas)
 
@@ -690,7 +712,7 @@ Estimated throughput:
 ```javascript
 // Indexes optimize queries:
 - userId + timestamp: Chat history queries
-- firebaseUid: User lookup
+- email: User lookup (unique)
 - TTL index on audit logs: Auto-cleanup
 ```
 
@@ -716,7 +738,7 @@ Estimated throughput:
 - Message virtualization: Display only visible messages
 - Lazy loading: Load history on scroll
 - Code splitting: Separate route bundles
-- Image optimization: Firebase lazy-load
+- Image optimization: Progressive loading
 ```
 
 ### Horizontal Scaling
@@ -730,8 +752,7 @@ Load Balancer
 
 Shared Resources:
     ├─ MongoDB (Replica Set)
-    ├─ Redis Cluster
-    └─ Firebase (Global)
+    └─ Redis Cluster
 
 Workers:
     ├─ Worker 1 (Bull)
@@ -762,6 +783,6 @@ This architecture provides:
 - ✅ **Rate limiting** (5 msgs/min per user)
 - ✅ **Ban prevention** (multi-layer protection)
 - ✅ **Scalable** (horizontal expansion ready)
-- ✅ **Secure** (Firebase auth, input validation)
+- ✅ **Secure** (JWT auth, input validation)
 - ✅ **Maintainable** (modular services)
 - ✅ **Observable** (comprehensive logging)

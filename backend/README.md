@@ -13,38 +13,23 @@ Copy `.env.example` to `.env` and fill in your values:
 cp .env.example .env
 ```
 
-### 3. Start Redis
-```bash
-# Using Docker
-docker run -d -p 6379:6379 redis:latest
+Required environment variables:
+- `MONGO_URI` - MongoDB connection string
+- `REDIS_URL` - Redis connection string  
+- `JWT_SECRET` - Secret key for JWT tokens
 
-# Or using local Redis
-redis-server
-```
+### 3: Start Dependencies
 
-### 4. Start MongoDB
-```bash
-# Using Docker
-docker run -d -p 27017:27017 mongo:latest
+**MongoDB and Redis must be running** (configure connection strings in `.env`).
 
-# Or using local MongoDB
-mongod
-```
-
-### 5. Environment Setup
-Add to `.env`:
-   - `MONGO_URI` - MongoDB connection string
-   - `REDIS_URL` - Redis connection string
-   - `JWT_SECRET` - Secret key for JWT tokens
-
-### 6. Start Backend Server
+### 4. Start Backend Server
 ```bash
 npm run dev
 ```
 
 Server will run on `http://localhost:5000`
 
-### 7. Start Message Worker (in separate terminal)
+### 5. Start Message Worker (in separate terminal)
 ```bash
 npm run worker:dev
 ```

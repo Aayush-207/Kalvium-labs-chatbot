@@ -8,7 +8,6 @@ d:\Company\Klavium labs chatbot\
 ├── 📄 README.md                          # Main project overview
 ├── 📄 QUICK_START.md                     # 5-minute setup guide
 ├── 📄 PROJECT_SUMMARY.md                 # What's included
-├── 📄 docker-compose.yml                 # Multi-service Docker setup
 ├── 📄 .gitignore                         # Git ignore file
 ├── 📄 .eslintrc                          # ESLint configuration
 ├── 📄 .prettierrc                        # Prettier configuration
@@ -35,11 +34,10 @@ d:\Company\Klavium labs chatbot\
 │   │   │
 │   │   ├── 📁 components/
 │   │   │   ├── 📄 ChatWindow.js         # Main chat UI
-│   │   │   ├── 📄 LoginForm.js          # Google login form
+│   │   │   ├── 📄 LoginForm.js          # Email/password login
 │   │   │   └── 📄 Toast.js              # Notifications
 │   │   │
 │   │   ├── 📁 services/
-│   │   │   ├── 📄 firebase.js           # Firebase initialization
 │   │   │   ├── 📄 api.js                # Axios with interceptors
 │   │   │   └── 📄 chatService.js        # Chat API calls
 │   │   │
@@ -54,21 +52,19 @@ d:\Company\Klavium labs chatbot\
 │   ├── 📄 package.json
 │   ├── 📄 .env.example
 │   ├── 📄 README.md
-│   ├── 📄 Dockerfile
 │   ├── 📁 src/
 │   │   ├── 📄 server.js                 # Express app
 │   │   │
 │   │   ├── 📁 config/
 │   │   │   ├── 📄 db.js                 # MongoDB connection
-│   │   │   ├── 📄 redis.js              # Redis connection
-│   │   │   └── 📄 firebase.js           # Firebase setup
+│   │   │   └── 📄 redis.js              # Redis connection
 │   │   │
 │   │   ├── 📁 models/
 │   │   │   ├── 📄 User.js               # User schema
 │   │   │   └── 📄 Message.js            # Message schema
 │   │   │
 │   │   ├── 📁 middleware/
-│   │   │   ├── 📄 authMiddleware.js     # Firebase verification
+│   │   │   ├── 📄 authMiddleware.js     # JWT verification
 │   │   │   └── 📄 errorMiddleware.js    # Error handling
 │   │   │
 │   │   ├── 📁 controllers/
@@ -154,7 +150,7 @@ TOTAL: ~10 documentation/config files
 
 ### Backend
 - ✅ Express.js REST API
-- ✅ Firebase token verification
+- ✅ JWT token verification
 - ✅ MongoDB persistence
 - ✅ Redis rate limiting
 - ✅ Bull message queue
@@ -165,20 +161,21 @@ TOTAL: ~10 documentation/config files
 - ✅ Comprehensive logging
 
 ### Infrastructure
-- ✅ Docker containerization
-- ✅ docker-compose for local dev
-- ✅ Production Dockerfiles
+- ✅ JWT authentication
 - ✅ Environment templates
 - ✅ Setup automation
 - ✅ Code quality configs
+- ✅ Error handling
+- ✅ Logging & monitoring
 
 ---
 
 ## 🚀 API Endpoints
 
-### Authentication (4 endpoints)
+### Authentication (5 endpoints)
 ```
-POST   /api/auth/verify          - Verify Firebase token
+POST   /api/auth/register        - Register user
+POST   /api/auth/login           - Login user
 GET    /api/auth/me              - Get user profile
 PUT    /api/auth/profile         - Update profile
 DELETE /api/auth/account         - Delete account
@@ -258,7 +255,7 @@ Production:
 ├── mongoose (MongoDB ORM)
 ├── redis (cache/queue)
 ├── bullmq (job queue)
-├── firebase-admin (auth)
+├── jsonwebtoken (JWT auth)
 ├── cors (cross-origin)
 ├── dotenv (env vars)
 └── axios (HTTP)
@@ -272,7 +269,6 @@ Development:
 Production:
 ├── react (UI)
 ├── next (framework)
-├── firebase (auth)
 ├── axios (HTTP)
 ├── tailwindcss (styling)
 └── autoprefixer (CSS)
@@ -298,7 +294,7 @@ Development:
 ## ✨ Production Ready Features
 
 ✅ Error handling & validation
-✅ Security: Firebase auth, CORS
+✅ Security: JWT auth, CORS
 ✅ Rate limiting & anti-ban
 ✅ Logging & monitoring hooks
 ✅ Database indexing
@@ -313,7 +309,7 @@ Development:
 ## 🎯 What's Next
 
 1. **Setup**: Run `setup.sh` or `setup.bat`
-2. **Configure**: Add Firebase credentials
+2. **Configure**: Add MongoDB and Redis connection strings to .env
 3. **Develop**: Customize chatbot responses
 4. **Test**: Run locally and verify
 5. **Deploy**: Use DEPLOYMENT.md guide

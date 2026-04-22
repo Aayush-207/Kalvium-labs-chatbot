@@ -7,7 +7,6 @@ Deploy your chatbot to production with this guide.
 ## 📋 Pre-Deployment Checklist
 
 - [ ] All environment variables configured
-- [ ] Firebase project created and verified
 - [ ] MongoDB Atlas account created
 - [ ] Redis Cloud account created
 - [ ] Backend tested locally
@@ -41,9 +40,7 @@ Deploy your chatbot to production with this guide.
      ```
      MONGO_URI=...
      REDIS_URL=...
-     FIREBASE_PROJECT_ID=...
-     FIREBASE_PRIVATE_KEY=...
-     FIREBASE_CLIENT_EMAIL=...
+     JWT_SECRET=...
      PORT=5000
      NODE_ENV=production
      ```
@@ -73,12 +70,6 @@ Deploy your chatbot to production with this guide.
    - Add environment variables:
      ```
      NEXT_PUBLIC_API_URL=https://your-backend.railway.app
-     NEXT_PUBLIC_FIREBASE_API_KEY=...
-     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-     NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
-     NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-     NEXT_PUBLIC_FIREBASE_APP_ID=...
      ```
 
 4. **Deploy**
@@ -137,47 +128,16 @@ netlify deploy --prod --dir=.next
 
 ---
 
-### Option 3: Docker + AWS ECS
-
-#### Build Docker Images
-
-```bash
-# Backend
-cd backend
-docker build -t chatbot-backend:latest .
-docker tag chatbot-backend:latest YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot-backend:latest
-docker push YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot-backend:latest
-
-# Frontend
-cd ../frontend
-docker build -t chatbot-frontend:latest .
-docker tag chatbot-frontend:latest YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot-frontend:latest
-docker push YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot-frontend:latest
-```
-
-#### Deploy on AWS ECS
-
-1. Create ECS cluster
-2. Create task definitions for backend and frontend
-3. Create services
-4. Configure load balancer
-5. Monitor with CloudWatch
-
----
-
-### Option 4: Google Cloud Platform
+### Option 3: Google Cloud Platform
 
 #### Cloud Run (Backend)
 
 ```bash
-# 1. Build and push to Container Registry
-gcloud builds submit --tag gcr.io/PROJECT_ID/chatbot-backend
-
-# 2. Deploy
+# 1. Deploy to Cloud Run
 gcloud run deploy chatbot-backend \
-  --image gcr.io/PROJECT_ID/chatbot-backend \
-  --memory 1Gi \
-  --set-env-vars MONGO_URI=...,REDIS_URL=...
+  --source . \
+  --region us-central1 \
+  --set-env-vars MONGO_URI=...,REDIS_URL=...,JWT_SECRET=...
 
 # 3. Get URL
 gcloud run services list

@@ -37,9 +37,8 @@ root/
 │   │   │   ├── ChatWindow.js
 │   │   │   ├── LoginForm.js
 │   │   │   └── Toast.js
-│   │   ├── services/          # API & Firebase
+│   │   ├── services/          # API calls
 │   │   │   ├── api.js
-│   │   │   ├── firebase.js
 │   │   │   └── chatService.js
 │   │   ├── context/           # Auth context
 │   │   │   └── AuthContext.js
@@ -158,40 +157,27 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 
 ### Step 3: Start Services
 
-**MongoDB** (if local):
-```bash
-mongod
-```
+**MongoDB & Redis must be running** (configured in `backend/.env` as `MONGO_URI` and `REDIS_URL`)
 
-**Redis** (if local):
-```bash
-redis-server
-```
-
-Or use Docker:
-```bash
-# MongoDB
-docker run -d -p 27017:27017 mongo:latest
-
-# Redis
-docker run -d -p 6379:6379 redis:latest
-```
+Both services should be accessible before starting the backend.
 
 ### Step 4: Start Backend
 
 ```bash
 cd backend
-
-# Terminal 1: Express server
 npm run dev
-
-# Terminal 2: Message worker
-npm run worker:dev
 ```
 
 Server: `http://localhost:5000` ✓
 
-### Step 5: Start Frontend
+### Step 5: Start Message Worker (new terminal)
+
+```bash
+cd backend
+npm run worker:dev
+```
+
+### Step 6: Start Frontend (new terminal)
 
 ```bash
 cd frontend
@@ -230,7 +216,7 @@ Frontend: `http://localhost:3000` ✓
 2. Frontend: Validates & sends to backend
    ↓
 3. Backend: 
-   - Verifies Firebase token
+   - Verifies JWT token
    - Checks rate limit (5/min)
    - Checks cooldown status
    - Detects duplicate messages
@@ -302,10 +288,9 @@ const chatbotResponses = {
 ```javascript
 {
   _id: ObjectId,
-  firebaseUid: String,    // Firebase UID
   name: String,           // Display name
   email: String,          // Email (unique)
-  photoURL: String,       // Google profile pic
+  password: String,       // Hashed password (SHA256)
   createdAt: Date,
   lastActivityAt: Date
 }
@@ -335,7 +320,7 @@ For detailed architecture, API specs, and scalability info:
 
 ## 🔐 Security
 
-✅ **Firebase Authentication** - Industry-standard OAuth 2.0  
+✅ **JWT Authentication** - Email/password with secure tokens
 ✅ **Token Verification** - Server-side validation on every request  
 ✅ **Input Validation** - Message length & content checks  
 ✅ **Rate Limiting** - Per-user request throttling  
@@ -400,11 +385,11 @@ mongosh --eval "db.adminCommand('ping')"
 docker run -d -p 27017:27017 mongo:latest
 ```
 
-### Firebase Token Verification Failed
+### JWT Token Verification Failed
 ```bash
-# Check Firebase credentials in .env
-# Ensure Firebase Google Auth is enabled
-# Verify project ID matches
+# Check JWT_SECRET in backend/.env
+# Ensure token is sent with Authorization header: Bearer {token}
+# Verify token hasn't expired (7 days)
 ```
 
 ### Rate Limit Always Triggered

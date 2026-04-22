@@ -2,72 +2,64 @@
 
 ## 🚀 Get Started in 5 Minutes
 
-### Option 1: Docker (Recommended)
-
-```bash
-# 1. Start services with Docker Compose
-docker-compose up -d
-
-# 2. Backend will be at: http://localhost:5000
-# 3. Frontend will be at: http://localhost:3000
-```
-
-**Stop services:**
-```bash
-docker-compose down
-```
-
----
-
-### Option 2: Local Setup
-
-#### Prerequisites
+### Prerequisites
 - Node.js 18+
-- MongoDB running locally
-- Redis running locally
+- MongoDB (connection string in `.env`)
+- Redis (connection string in `.env`)
 
-#### Backend Setup
+### Setup Steps
+
+#### 1. Backend Setup
 
 ```bash
-# 1. Navigate to backend
+# Navigate to backend
 cd backend
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Create .env file
+# Create .env file
 cp .env.example .env
 
-# 4. Fill in Firebase credentials in .env
-
-# 5. Terminal 1: Start Express server
-npm run dev
-
-# 6. Terminal 2: Start message worker
-npm run worker:dev
-
-# Backend at http://localhost:5000
+# Edit .env with your MongoDB and Redis connection strings
+# Example:
+# MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/db
+# REDIS_URL=redis://localhost:6379
+# JWT_SECRET=your-secret-key
 ```
 
-#### Frontend Setup
+#### 2. Terminal 1: Start Backend
 
 ```bash
-# 1. Navigate to frontend
+cd backend
+npm run dev
+```
+
+Backend will be at: `http://localhost:5000`
+
+#### 3. Terminal 2: Start Message Worker
+
+```bash
+cd backend
+npm run worker:dev
+```
+
+#### 4. Terminal 3: Start Frontend
+
+```bash
 cd frontend
 
-# 2. Install dependencies
+# Install dependencies (first time only)
 npm install
 
-# 3. Create .env.local file
+# Create .env.local file
 cp .env.example .env.local
 
-# 4. Fill in Firebase config in .env.local
-
-# 5. Start Next.js dev server
+# Start dev server
 npm run dev
-
-# Frontend at http://localhost:3000
 ```
+
+Frontend will be at: `http://localhost:3000`
 
 ---
 
@@ -76,9 +68,9 @@ npm run dev
 ### 1. Open Browser
 Go to `http://localhost:3000`
 
-### 2. Login with Google
-- Click "Sign in with Google"
-- Use any Google account
+### 2. Create Account or Login
+- Click "Sign up" to register with email/password OR
+- Click "Sign in" with existing credentials
 - You'll be redirected to `/chat`
 
 ### 3. Send Messages
@@ -110,8 +102,18 @@ curl http://localhost:5000/health
 ### API Test
 
 ```bash
-# Get chat history (requires Firebase token)
-curl -H "Authorization: Bearer {YOUR_TOKEN}" \
+# Register new user
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User","email":"test@example.com","password":"pass123"}'
+
+# Login
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"pass123"}'
+
+# Use returned JWT token for other endpoints
+curl -H "Authorization: Bearer {JWT_TOKEN}" \
   http://localhost:5000/api/chat/history
 ```
 
@@ -150,17 +152,14 @@ redis-cli
 ### Backend Issues
 
 ```bash
-# Check if MongoDB is running
-mongosh --eval "db.adminCommand('ping')"
-
-# Check if Redis is running
-redis-cli ping
+# Check if MongoDB is running (test connection)
+curl http://localhost:5000/health
 
 # View backend logs
 tail -f backend/logs/*.log
 
-# Test MongoDB connection
-curl http://localhost:5000/health
+# Check JWT_SECRET is set
+cat backend/.env | grep JWT_SECRET
 ```
 
 ### Frontend Issues
@@ -176,15 +175,15 @@ rm -rf frontend/.next
 cd frontend && npm install
 ```
 
-### Firebase Issues
+### MongoDB Connection Issues
 
 ```bash
-# Verify Firebase config
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
-# Must match Firebase Console project
+# If using local MongoDB
+mongosh --eval "db.adminCommand('ping')"
 
-# Check Firebase credentials
-cat backend/.env | grep FIREBASE
+# If using MongoDB Atlas
+# Verify MONGO_URI in .env is correct
+# Check IP whitelist in MongoDB Atlas
 ```
 
 ---
@@ -206,11 +205,6 @@ npm run lint         # Check code quality
 # Database
 mongosh              # Connect to MongoDB
 redis-cli            # Connect to Redis
-
-# Docker
-docker-compose up    # Start all services
-docker-compose down  # Stop all services
-docker logs -f {container-name}  # View logs
 ```
 
 ---

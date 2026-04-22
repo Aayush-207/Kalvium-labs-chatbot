@@ -27,13 +27,12 @@ backend/
 │   ├── server.js               # Express app entry point
 │   ├── config/
 │   │   ├── db.js               # MongoDB connection
-│   │   ├── redis.js            # Redis connection
-│   │   └── firebase.js         # Firebase setup
+│   │   └── redis.js            # Redis connection
 │   ├── models/
 │   │   ├── User.js             # User schema
 │   │   └── Message.js          # Message schema
 │   ├── middleware/
-│   │   ├── authMiddleware.js   # Firebase token verification
+│   │   ├── authMiddleware.js   # JWT token verification
 │   │   └── errorMiddleware.js  # Global error handler
 │   ├── controllers/
 │   │   ├── chatController.js   # Chat endpoints
@@ -50,7 +49,6 @@ backend/
 │       └── messageWorker.js    # Bull queue worker
 ├── package.json
 ├── .env.example
-├── Dockerfile
 ├── README.md
 └── [Node modules will be installed]
 ```
@@ -60,7 +58,7 @@ backend/
 ### ✅ Frontend (Next.js + React)
 - [x] Next.js 14 with App Router
 - [x] React 18 components
-- [x] Firebase Google Authentication
+- [x] JWT Email/Password Authentication
 - [x] Responsive chat UI (WhatsApp-like)
 - [x] Auto-scrolling message display
 - [x] Typing indicator
@@ -88,7 +86,6 @@ frontend/
 │   │   ├── LoginForm.js        # Login component
 │   │   └── Toast.js            # Notifications
 │   ├── services/
-│   │   ├── firebase.js         # Firebase config
 │   │   ├── api.js              # Axios setup
 │   │   └── chatService.js      # Chat API calls
 │   ├── context/
@@ -100,7 +97,6 @@ frontend/
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── .env.example
-├── Dockerfile
 ├── README.md
 └── [Node modules will be installed]
 ```
@@ -127,18 +123,17 @@ docs/
 ---
 
 ### ✅ Configuration & DevOps
-- [x] Docker setup for both services
-- [x] docker-compose.yml for local development
+- [x] JWT authentication setup
 - [x] .gitignore for version control
 - [x] .eslintrc for code quality
 - [x] .prettierrc for code formatting
 - [x] setup.sh (Linux/Mac setup script)
 - [x] setup.bat (Windows setup script)
+- [x] setup.bat (Windows setup script)
 
 **Config Files:**
 ```
 root/
-├── docker-compose.yml          # Multi-service Docker setup
 ├── .gitignore                  # Git ignore rules
 ├── .eslintrc                   # ESLint config
 ├── .prettierrc                 # Prettier config
@@ -170,10 +165,11 @@ root/
 - Job concurrency: 5 parallel workers
 
 ### 4. **Authentication**
-- Firebase Google Sign-In
-- Server-side token verification
-- Automatic user creation
-- Secure session management
+- JWT Email/Password Authentication
+- Secure password hashing (SHA256)
+- Token verification on every request
+- Automatic user creation on registration
+- Secure token storage
 
 ### 5. **Chat System**
 - Real-time message display
@@ -220,7 +216,7 @@ Background:
 - React 18
 - TypeScript (ready)
 - Tailwind CSS
-- Firebase Auth
+- JWT Authentication
 - Axios
 
 **Backend:**
@@ -229,12 +225,11 @@ Background:
 - MongoDB + Mongoose
 - Redis
 - BullMQ
-- Firebase Admin
+- JWT (jsonwebtoken)
 
 **DevOps:**
-- Docker & Docker Compose
+- Email/Password Authentication
 - Git version control
-- GitHub-ready CI/CD
 
 ---
 
@@ -271,13 +266,19 @@ Background:
 # 2. Windows
 setup.bat
 
-# 3. Edit environment files with Firebase credentials
+# 3. Configure MongoDB & Redis in backend/.env
 
-# 4. Start services
-docker-compose up
+# 4. Start Backend
+cd backend && npm run dev
 
-# 5. Frontend: http://localhost:3000
-# 6. Backend: http://localhost:5000
+# 5. Start Worker (new terminal)
+cd backend && npm run worker:dev
+
+# 6. Start Frontend (new terminal)
+cd frontend && npm run dev
+
+# 7. Frontend: http://localhost:3000
+# 8. Backend: http://localhost:5000
 ```
 
 ### Full Setup
@@ -300,7 +301,7 @@ See [QUICK_START.md](./QUICK_START.md) for detailed steps.
 
 ## 🔐 Security Features
 
-✅ Firebase authentication
+✅ JWT email/password authentication
 ✅ Server-side token verification
 ✅ Input validation
 ✅ Rate limiting
@@ -330,7 +331,7 @@ Klavium labs chatbot/
 ├── frontend/                   (Next.js app)
 │   ├── src/app/               (Pages & layout)
 │   ├── src/components/        (React components)
-│   ├── src/services/          (API & Firebase)
+│   ├── src/services/          (API calls)
 │   ├── src/context/           (Auth state)
 │   └── package.json
 ├── backend/                    (Express server)
@@ -347,7 +348,6 @@ Klavium labs chatbot/
 │   ├── API_REFERENCE.md
 │   ├── CONFIGURATION.md
 │   └── DEPLOYMENT.md
-├── docker-compose.yml          (Multi-service setup)
 ├── .gitignore                  (Git ignore)
 ├── .eslintrc                   (Code quality)
 ├── .prettierrc                 (Code formatting)
@@ -363,9 +363,9 @@ Klavium labs chatbot/
 ✅ **Production-Ready** - Error handling, logging, monitoring
 ✅ **Modular** - Services separated by concern
 ✅ **Scalable** - Horizontal scaling ready
-✅ **Secure** - Firebase auth, input validation
+✅ **Secure** - JWT auth, input validation
 ✅ **Well-Documented** - 6 comprehensive docs
-✅ **Easy Setup** - Docker or local development
+✅ **Easy Setup** - Simple npm install
 ✅ **Full-Stack** - Complete working application
 ✅ **Customizable** - Easy to modify and extend
 
@@ -374,13 +374,14 @@ Klavium labs chatbot/
 ## 🎯 Next Steps
 
 1. Run setup script: `./setup.sh` or `setup.bat`
-2. Configure `.env` files with Firebase credentials
-3. Start services: `docker-compose up`
-4. Open `http://localhost:3000`
-5. Login with Google
-6. Send messages and test features
-7. Customize responses in `chatbotService.js`
-8. Deploy to production (see DEPLOYMENT.md)
+2. Configure `.env` file with MongoDB and Redis connection strings
+3. Start Backend: `npm run dev` (from backend/)
+4. Start Worker: `npm run worker:dev` (from backend/)
+5. Start Frontend: `npm run dev` (from frontend/)
+6. Open `http://localhost:3000`
+7. Register/Login and start chatting
+8. Customize responses in `chatbotService.js`
+9. Deploy to production (see DEPLOYMENT.md)
 
 ---
 

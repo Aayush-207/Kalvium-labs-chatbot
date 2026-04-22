@@ -4,7 +4,7 @@ import api from './api';
  * Send message to chatbot
  */
 export const sendMessage = async (text) => {
-  const response = await api.post('/chat/send', { text });
+  const response = await api.post('/api/chat/send', { text });
   return response.data;
 };
 
@@ -12,7 +12,7 @@ export const sendMessage = async (text) => {
  * Get chat history
  */
 export const getChatHistory = async (limit = 50, skip = 0) => {
-  const response = await api.get('/chat/history', {
+  const response = await api.get('/api/chat/history', {
     params: { limit, skip },
   });
   return response.data;
@@ -22,6 +22,6 @@ export const getChatHistory = async (limit = 50, skip = 0) => {
  * Get single message
  */
 export const getMessage = async (messageId) => {
-  const response = await api.get(`/chat/message/${messageId}`);
+  const response = await api.get(`/api/chat/message/${messageId}`);
   return response.data;
 };

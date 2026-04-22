@@ -252,31 +252,27 @@ message.read ? '✓✓' : '✓'
 
 ## 🔐 Security Settings
 
-### Firebase Configuration
-
-Edit: `frontend/.env.local`
-
-```env
-# Your Firebase project credentials
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
-
-# Get from Firebase Console:
-# Project Settings → Web app → Copy config
-```
-
-### API Keys
+### JWT Authentication
 
 Edit: `backend/.env`
 
 ```env
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY=your-private-key
-FIREBASE_CLIENT_EMAIL=your-service-account-email
+# Secret key for JWT token generation
+# Use a strong random string for production
+JWT_SECRET=your-super-secret-key-min-32-chars
 
-# Get from Firebase Console:
-# Service Accounts → Generate new private key
+# Token expiration (set in authController.js)
+# Default: 7 days (expiresIn: '7d')
 ```
+
+### API Keys & Secrets
+
+Best practices:
+- Never commit `.env` files
+- Use different secrets for dev/production
+- Rotate secrets regularly
+- Use strong random strings (min 32 characters)
+
 
 ### CORS Settings
 
@@ -337,9 +333,6 @@ MONGO_URI=mongodb://localhost:27017/chatbot
 
 # MongoDB Atlas (Cloud)
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname?retryWrites=true
-
-# Docker
-MONGO_URI=mongodb://mongodb:27017/chatbot
 ```
 
 ### Redis Connection
@@ -352,9 +345,6 @@ REDIS_URL=redis://localhost:6379
 
 # Redis Cloud
 REDIS_URL=redis://default:password@host:port
-
-# Docker
-REDIS_URL=redis://redis:6379
 ```
 
 ---
@@ -368,10 +358,9 @@ Edit: `backend/src/models/User.js`
 ```javascript
 const userSchema = new mongoose.Schema(
   {
-    firebaseUid: String,
     name: String,
     email: String,
-    photoURL: String,
+    password: String,
     
     // Add custom fields:
     phone: String,
@@ -457,7 +446,7 @@ ANTI_BAN_DELAY_MAX=200
 | Colors | `tailwind.config.js` | `theme.colors` |
 | UI text | Component `.js` files | String literals |
 | Database | `.env` | `MONGO_URI`, `REDIS_URL` |
-| Firebase | `.env` + `.env.local` | `FIREBASE_*` vars |
+| JWT Auth | `.env` | `JWT_SECRET` |
 
 ---
 
