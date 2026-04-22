@@ -1,788 +1,136 @@
 # Low-Level Design (LLD) - Customer Support Chatbot
 
 ## Table of Contents
-1. [Architecture Overview](#architecture-overview)
-2. [Component Breakdown](#component-breakdown)
-3. [Chat Flow Diagram](#chat-flow-diagram)
-4. [Message Queue System](#message-queue-system)
-5. [Rate Limiting Strategy](#rate-limiting-strategy)
-6. [Ban Avoidance Mechanisms](#ban-avoidance-mechanisms)
-7. [Database Schema](#database-schema)
-8. [API Specification](#api-specification)
-9. [Security Considerations](#security-considerations)
-10. [Scalability & Performance](#scalability--performance)
+1. [Architecture](#architecture)
+2. [API Endpoints](#api-endpoints)
+3. [4 Anti-Ban Mechanisms](#4-anti-ban-mechanisms)
+4. [Database](#database)
+5. [Security](#security)
 
 ---
 
-## Architecture Overview
+## Architecture
 
-### High-Level Architecture
+**Frontend**: Next.js 14 + React 18 + Tailwind CSS (port 3000)
+**Backend**: Express.js (port 5000)
+**Database**: lowdb (file-based JSON at `backend/db.json`)
+**Optional**: Redis (port 6379) for rate limiting & cooldowns
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend (Next.js)                  │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ Login Page          │ Chat Page                      │   │
-│  │ - Google Auth       │ - Message Display              │   │
-│  │ - Email/Password  │ - Input Box                    │   │
-│  │                     │ - Polling for Bot Response     │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────┬──────────────────────────────────────┘
-                      │ Axios (HTTP/HTTPS)
-┌─────────────────────▼──────────────────────────────────────┐
-│               Backend (Express.js)                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐ │
-│  │  Auth Routes │  │  Chat Routes │  │  Error Handler    │ │
-│  ├──────────────┤  ├──────────────┤  ├───────────────────┤ │
-│  │ /verify      │  │ /send        │  │  Global Error     │ │
-│  │ /me          │  │ /history     │  │  Middleware       │ │
-│  │ /profile     │  │ /message/:id │  │                   │ │
-│  │ /account     │  │              │  │                   │ │
-│  └──────────────┘  └──────────────┘  └───────────────────┘ │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Services Layer                          │  │
-│  ├──────────────────────────────────────────────────────┤  │
-│  │ - chatbotService: Rule-based responses              │  │
-│  │ - rateLimiter: 5 messages/min per user              │  │
-│  │ - antiBanService: Spam detection & throttling       │  │
-│  │ - queueService: Bull/Redis job management           │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌────────────────────────┐     ┌────────────────────────┐  │
-│  │   MongoDB Driver       │     │   Redis Client         │  │
-│  │  (Mongoose ORM)        │     │  (for cache/queue)     │  │
-│  └────────────────────────┘     └────────────────────────┘  │
-└─────────────────┬────────────────────┬──────────────────────┘
-                  │                    │
-        ┌─────────▼────────┐  ┌────────▼──────────┐
-        │    MongoDB       │  │     Redis         │
-        │  - Users         │  │  - Rate Limits    │
-        │  - Messages      │  │  - Message Queue  │
-        │                  │  │  - Cooldowns      │
-        └──────────────────┘  └───────────────────┘
-                  
-        ┌──────────────────────────────────┐
-        │   Message Worker (Bull Queue)    │
-        │  - Process jobs one by one       │
-        │  - Add delays (2-5 sec)          │
-        │  - Generate bot responses        │
-        │  - Save to database              │
-        └──────────────────────────────────┘
-```
+### Response Flow
+1. User sends message → Save instantly to lowdb
+2. Add 2-5 second artificial delay (simulates thinking)
+3. Generate bot response synchronously
+4. Save bot message → Return both messages in single response
+
+### Key Services
+- **chatbotService**: Keyword-based responses
+- **antiBanService**: 4-layer spam prevention
+- **rateLimiter**: 5 msgs/min per user (Redis with fallback)
+- **queueService**: Message queue (Bull/Redis or sync mode)
 
 ---
 
-## Component Breakdown
+## API Endpoints
 
-### Frontend Components
+### Authentication
+- `POST /api/auth/register` - Register user
+- `POST /api/auth/login` - Login (returns JWT)
+- `GET /api/auth/me` - Get current user
+- `PUT /api/auth/profile` - Update profile
+- `DELETE /api/auth/account` - Delete account
 
-#### 1. **LoginForm Component**
-- **Location**: `src/components/LoginForm.js`
-- **Responsibility**: Handle user registration and login with JWT
-- **Features**:
-  - Email/password registration
-  - Email/password login
-  - Form validation
-  - Error handling
-  - Token management
-  - Redirect to chat on success
-- **Flow**:
-  ```
-  User enters email/password
-  → Toggle between register/login
-  → POST to /api/auth/register or /api/auth/login
-  → Receive JWT token
-  → Save to localStorage
-  → Verify with /api/auth/me
-  → Redirect to /chat
-  ```
+### Chat (Requires JWT)
+- `POST /api/chat/send` - Send message → Returns user + bot messages
+- `GET /api/chat/history` - Get chat history
+- `GET /api/chat/message/:id` - Get single message
 
-#### 2. **ChatWindow Component**
-- **Location**: `src/components/ChatWindow.js`
-- **Responsibility**: Main chat interface
-- **Features**:
-  - Message display (user vs bot)
-  - Input field with send button
-  - Auto-scroll to latest
-  - Typing indicator
-  - Rate limit display
-  - Polling for bot response
-  - Toast notifications
-- **State Management**:
-  ```javascript
-  messages[]        // All messages in conversation
-  inputValue        // Current input text
-  sending          // Boolean: message being sent
-  isTyping         // Boolean: waiting for bot response
-  loading          // Boolean: loading chat history
-  rateLimit        // {remaining, resetIn} info
-  ```
-
-#### 3. **Toast Component**
-- **Location**: `src/components/Toast.js`
-- **Responsibility**: Display notifications
-- **Types**: success, error, warning, info
-- **Duration**: Auto-hide after 3 seconds
-
-### Backend Services
-
-#### 1. **chatbotService.js**
-```javascript
-// Rule-based response generation
-const chatbotResponses = {
-  "hi": "Hello! How can I help you?",
-  "price": "Our pricing starts at $10/month",
-  ...
-}
-
-// Functions:
-generateBotResponse(userMessage) // → string
-isValidMessage(message)           // → boolean
-```
-
-#### 2. **rateLimiter.js**
-```javascript
-// Redis-based rate limiting
-// Key structure: rate_limit:{userId}
-// Config: 5 messages per 60 seconds
-
-// Functions:
-checkRateLimit(userId)   // → {allowed, remaining, resetIn}
-resetRateLimit(userId)   // Admin function
-```
-
-#### 3. **antiBanService.js**
-```javascript
-// Multi-layer spam/ban prevention
-// 1. Duplicate message detection
-// 2. Message velocity tracking
-// 3. Cooldown periods
-// 4. Action logging
-
-// Functions:
-getRandomDelay()                    // → 2-5 sec random
-checkDuplicateMessages(userId, msg) // → {isDuplicate, count}
-trackMessageVelocity(userId)        // → {shouldCooldown, count}
-isUserInCooldown(userId)            // → boolean
-getCooldownRemaining(userId)        // → milliseconds
-logMessageAction(userId, action)    // Monitoring
-```
-
-#### 4. **queueService.js**
-```javascript
-// Bull/BullMQ message queue
-// Config: 3 retries, exponential backoff
-// Job concurrency: 5 parallel jobs
-
-// Functions:
-addMessageToQueue(messageData)  // → Job
-getQueueStats()                 // → {active, waiting, completed}
-clearQueue()                    // Admin function
-```
-
----
-
-## Chat Flow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    User Sends Message                           │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                    ┌────────▼────────┐
-                    │  Frontend       │
-                    │  sendMessage()  │
-                    └────────┬────────┘
-                             │
-                    ┌────────▼──────────────┐
-                    │  POST /api/chat/send  │
-                    │  + JWT Token          │
-                    └────────┬──────────────┘
-                             │
-        ┌────────────────────▼──────────────────────┐
-        │        Backend Route Handler              │
-        └────────────────────┬──────────────────────┘
-                             │
-        ┌────────────────────▼──────────────────────┐
-        │  1. Verify JWT Token                      │
-        │  2. Validate message (not empty, <1000)   │
-        │  3. Check cooldown status                 │
-        │  4. Check rate limit (5/min)              │
-        │  5. Check duplicate messages              │
-        └────────────────────┬──────────────────────┘
-                             │
-                    ┌────────▼────────────┐
-                    │  All checks pass?   │
-                    └────┬──────────┬─────┘
-                         │ YES      │ NO (429/400)
-                    ┌────▼────┐    │
-                    │  Save   │    └─→ Return Error
-                    │  User   │
-                    │ Message │
-                    └────┬────┘
-                         │
-                    ┌────▼──────────────┐
-                    │  Add Job to Queue  │
-                    │  (Bull/Redis)      │
-                    └────┬──────────────┘
-                         │
-                    ┌────▼───────────┐
-                    │  Return 201    │
-                    │  + Job ID      │
-                    └────┬───────────┘
-                         │
-        ┌────────────────▼──────────────────┐
-        │  Frontend: Show Typing Indicator   │
-        │  Start Polling /api/chat/history   │
-        └────────────────┬──────────────────┘
-                         │
-        ┌────────────────▼──────────────────────┐
-        │   Message Worker (Separate Process)   │
-        │   Bull Worker listening on queue      │
-        └────────────────┬──────────────────────┘
-                         │
-        ┌────────────────▼──────────────────────┐
-        │  1. Get job: {userId, messageText}    │
-        │  2. Random delay (2-5 seconds)        │
-        │  3. Generate bot response             │
-        │  4. Save bot message to DB            │
-        │  5. Job completed                     │
-        └────────────────┬──────────────────────┘
-                         │
-        ┌────────────────▼──────────────────────┐
-        │  Frontend receives bot message        │
-        │  1. Update messages array             │
-        │  2. Hide typing indicator             │
-        │  3. Auto-scroll to bottom             │
-        │  4. Show success toast                │
-        └───────────────────────────────────────┘
-```
-
----
-
-## Message Queue System
-
-### Bull/BullMQ Configuration
-
-```javascript
-{
-  connection: redisClient,
-  concurrency: 5,              // 5 parallel workers
-  attempts: 3,                 // Retry 3 times
-  backoff: {
-    type: 'exponential',       // 2s, 4s, 8s...
-    delay: 2000
-  }
-}
-```
-
-### Job Structure
-
-```javascript
-{
-  id: "msg-{userId}-{timestamp}",
-  data: {
-    messageId: ObjectId,       // Original user message
-    userId: string,            // User ID
-    text: string,              // Message content
-    userMessageId: ObjectId
-  },
-  status: "active|completed|failed",
-  progress: 0-100,
-  attempts: 0-3,
-  timestamp: Date
-}
-```
-
-### Worker Processing
-
-```
-Job Received
-  ↓
-Update Progress (20%)
-  ↓
-Wait Random Delay (2-5s)
-  ↓
-Update Progress (50%)
-  ↓
-Generate Bot Response
-  ↓
-Save Bot Message (MongoDB)
-  ↓
-Update Progress (100%)
-  ↓
-Job Completed ✓
-```
-
----
-
-## Rate Limiting Strategy
-
-### Configuration
-
-```javascript
-RATE_LIMIT_WINDOW_MS = 60000     // 1 minute window
-RATE_LIMIT_MAX_MESSAGES = 5      // 5 messages max
-```
-
-### Redis Key Structure
-
-```
-rate_limit:{userId}
-├─ Value: number (current count)
-├─ TTL: 60 seconds (auto-expire)
-└─ Increment: 1 per message
-```
-
-### Logic Flow
-
-```
-User sends message
-  ↓
-Get key "rate_limit:{userId}"
-  ↓
-INCR (increment by 1)
-  ↓
-First message?
-  ├─ YES: EXPIRE key in 60s
-  └─ NO: Get TTL
-  ↓
-count ≤ 5?
-  ├─ YES: Allowed ✓
-  └─ NO: 429 Too Many Requests ✗
-```
-
-### Response Format
-
+### Response Example
 ```json
 {
-  "allowed": true/false,
-  "remaining": 3,
-  "resetIn": 45000
+  "success": true,
+  "message": { "_id": "...", "sender": "user", "text": "Hello" },
+  "botMessage": { "_id": "...", "sender": "bot", "text": "Hello! How can I help you?" }
 }
 ```
 
+### Chatbot Keywords
+- **"hi" / "hello"** → "Hello! How can I help you?"
+- **"price" / "pricing"** → "Our pricing starts at $10/month"
+- **"help"** → "How can I assist you today?"
+- **"thanks" / "thank"** → "You are welcome!"
+- **Default** → "I'm not sure, our team will contact you soon"
+
 ---
 
-## Ban Avoidance Mechanisms
+## 4 Anti-Ban Mechanisms
 
-### 1. **Artificial Message Delay**
-
+### 1. Artificial Message Delay (2-5 seconds)
+Simulates natural response time to prevent instant bot detection.
 ```javascript
 getRandomDelay() {
-  const MIN = 2000;  // 2 seconds
-  const MAX = 5000;  // 5 seconds
-  return Math.random() * (MAX - MIN) + MIN;
+  return Math.random() * 3000 + 2000;  // 2-5 seconds
 }
 ```
 
-**Purpose**: Simulate natural human response time, prevent instant bot responses that trigger ban detection.
+### 2. Duplicate Message Detection (3-message threshold)
+Blocks spam using MD5 hash with 5-minute window.
+- **Key**: `duplicate_check:{userId}:{MD5Hash}`
+- **Threshold**: 3 identical messages → HTTP 400
+- **Window**: 5 minutes (auto-expire)
 
-### 2. **Duplicate Message Detection**
+### 3. Message Velocity Tracking (10 msgs/60sec)
+Detects rapid bursts and triggers cooldown.
+- **Key**: `message_velocity:{userId}`
+- **Window**: 60 seconds (sliding)
+- **Threshold**: 10+ messages → Activate 30-second cooldown
 
-```javascript
-// Hash message to lowercase
-messageHash = MD5(message.toLowerCase())
-
-// Key: duplicate_check:{userId}:{hash}
-// Action: INCR count
-// Threshold: 3 duplicate messages → Block
-```
-
-**Purpose**: Prevent spam of identical messages.
-
-### 3. **Message Velocity Tracking**
-
-```javascript
-// Key: message_velocity:{userId}
-// Window: 60 seconds (sliding)
-// Threshold: 10+ messages in 60s → Trigger cooldown
-
-if (messageCount >= 10) {
-  Set cooldown key: cooldown:{userId}
-  Duration: 30 seconds
-  Status: User blocked from sending
-}
-```
-
-**Purpose**: Detect burst attacks and enforce cooldown.
-
-### 4. **Cooldown Period**
-
-```javascript
-// Key: cooldown:{userId}
-// TTL: 30 seconds
-// During cooldown: All messages rejected with 429
-
-if (user in cooldown) {
-  return 429 "Too many messages. Please wait."
-}
-```
-
-**Purpose**: Force user to wait after rapid message sending.
-
-### 5. **Action Logging**
-
-```javascript
-logMessageAction(userId, action, details) {
-  // Timestamp, user ID, action, details
-  // Local: console.log
-  // Production: Send to ELK, Splunk, CloudWatch
-}
-
-// Actions logged:
-// - send_attempt
-// - rate_limited
-// - blocked_cooldown
-// - duplicate_detected
-// - processing_started
-// - bot_response_sent
-// - processing_error
-```
+### 4. Cooldown Period (30 seconds)
+Enforces wait period after velocity exceeded.
+- **Key**: `cooldown:{userId}`
+- **Duration**: 30 seconds
+- **Response**: HTTP 429 (Too Many Requests)
 
 ---
 
-## Database Schema
+## Database
 
-### User Collection
-
-```javascript
+### Users Collection (lowdb)
+```json
 {
-  _id: ObjectId,
-  name: String,                 // User display name
-  email: String,                // Email (unique)
-  password: String,             // Hashed password (SHA256)
-  createdAt: Date,              // Account creation
-  lastActivityAt: Date,         // Last message activity
-  updatedAt: Date               // Last profile update
+  "_id": "uuid",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SHA256_HASH",
+  "createdAt": "2026-04-22T10:00:00Z",
+  "lastActivityAt": "2026-04-22T10:05:00Z"
 }
-
-// Indexes:
-// - email (unique)
 ```
 
-### Message Collection
-
-```javascript
+### Messages Collection (lowdb)
+```json
 {
-  _id: ObjectId,
-  userId: ObjectId,             // Reference to User
-  sender: String,               // "user" | "bot"
-  text: String,                 // Message content
-  messageHash: String,          // MD5 hash for duplicates
-  timestamp: Date,              // Message sent time
-  status: String,               // "pending" | "sent" | "failed"
-  createdAt: Date,              // DB creation time
-  updatedAt: Date               // DB update time
+  "_id": "uuid",
+  "userId": "uuid",
+  "sender": "user|bot",
+  "text": "Message content",
+  "messageHash": "MD5_HASH",
+  "timestamp": "2026-04-22T10:00:00Z",
+  "status": "sent|delivered"
 }
-
-// Indexes:
-// - userId + timestamp (composite for history)
-// - userId (for user filtering)
-// - timestamp (for time-based queries)
 ```
 
 ---
 
-## API Specification
+## Security
 
-### Authentication Endpoints
-
-#### 1. Register User
-```
-POST /api/auth/register
-Body: {
-  name: string,
-  email: string,
-  password: string
-}
-Response: {
-  success: boolean,
-  token: string,  // JWT token
-  user: {
-    _id: ObjectId,
-    name: string,
-    email: string
-  }
-}
-Status: 201 | 400 | 500
-```
-
-#### 2. Login User
-```
-POST /api/auth/login
-Body: {
-  email: string,
-  password: string
-}
-Response: {
-  success: boolean,
-  token: string,  // JWT token
-  user: {
-    _id: ObjectId,
-    name: string,
-    email: string
-  }
-}
-Status: 200 | 401 | 500
-```
-
-#### 3. Get Current User
-```
-GET /api/auth/me
-Headers: Authorization: Bearer {jwtToken}
-Response: {
-  _id: ObjectId,
-  name: string,
-  email: string,
-  createdAt: Date,
-  lastActivityAt: Date
-}
-Status: 200 | 401 | 404 | 500
-```
-
-#### 4. Update Profile
-```
-PUT /api/auth/profile
-Headers: Authorization: Bearer {idToken}
-Body: {
-  name?: string
-}
-Response: Updated user object
-Status: 200 | 400 | 401 | 500
-```
-
-#### 4. Delete Account
-```
-DELETE /api/auth/account
-Headers: Authorization: Bearer {idToken}
-Response: { message: "Account deleted successfully" }
-Status: 200 | 401 | 500
-```
-
-### Chat Endpoints
-
-#### 1. Send Message
-```
-POST /api/chat/send
-Headers: Authorization: Bearer {idToken}
-Body: {
-  text: string (required, 1-1000 chars)
-}
-Response: {
-  success: true,
-  message: {
-    _id: ObjectId,
-    sender: "user",
-    text: string,
-    timestamp: Date
-  },
-  queueJobId: string,
-  info: {
-    rateLimitRemaining: number,
-    delayEstimate: string (e.g., "3s")
-  }
-}
-Status: 201 | 400 | 429 | 500
-
-// Errors:
-400: Invalid message
-429: Rate limited or cooldown active
-500: Server error
-```
-
-#### 2. Get Chat History
-```
-GET /api/chat/history?limit=50&skip=0
-Headers: Authorization: Bearer {idToken}
-Response: {
-  messages: [
-    {
-      _id: ObjectId,
-      sender: "user" | "bot",
-      text: string,
-      timestamp: Date
-    }
-  ],
-  total: number,
-  limit: number,
-  skip: number
-}
-Status: 200 | 401 | 500
-```
-
-#### 3. Get Single Message
-```
-GET /api/chat/message/:messageId
-Headers: Authorization: Bearer {idToken}
-Response: {
-  _id: ObjectId,
-  sender: string,
-  text: string,
-  timestamp: Date,
-  status: string
-}
-Status: 200 | 401 | 404 | 500
-```
-
-### Health Endpoints
-
-#### Health Check
-```
-GET /health
-Response: {
-  status: "OK",
-  timestamp: Date
-}
-Status: 200
-```
-
-#### Stats
-```
-GET /api/stats
-Response: {
-  server: "running",
-  uptime: number (seconds),
-  timestamp: Date
-}
-Status: 200 | 500
-```
+- **Auth**: JWT (HS256) stored in localStorage, attached to all /api/chat requests
+- **Passwords**: SHA256 hashing, never returned in API responses
+- **Rate Limiting**: 5 msgs/min per user, graceful fallback without Redis
+- **Validation**: Message length 1-1000 chars, email format validation
+- **Error Handling**: Global middleware, no stack traces leaked, proper HTTP codes (400, 401, 429, 500)
+- **CORS**: Restricted to frontend origin
+- **Input**: Lowdb protects against SQL injection; React escapes XSS
 
 ---
 
-## Security Considerations
 
-### 1. **JWT Authentication**
-- Tokens signed with JWT_SECRET (HS256)
-- Tokens have 7-day expiration
-- Passwords hashed with SHA256
-- Tokens included in Authorization header
-
-### 2. **Authorization**
-- All chat/auth routes require valid JWT
-- Users can only access own messages
-- User ID verified from token, not request body
-
-### 3. **Input Validation**
-- Message length: 1-1000 characters
-- SQL injection: MongoDB parameterized queries
-- XSS: Sanitization on display (React escapes)
-
-### 4. **Rate Limiting**
-- Per-user limits prevent brute force
-- Redis TTL auto-cleanup
-- Cooldown prevents bulk spam
-
-### 5. **Data Privacy**
-- Passwords hashed with SHA256
-- JWT tokens signed with secret
-- Messages encrypted in transit (HTTPS)
-- Database encryption at rest (MongoDB Atlas)
-
-### 6. **CORS Configuration**
-```javascript
-cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
-})
-```
-
----
-
-## Scalability & Performance
-
-### Current Capacity
-
-```
-Assumptions:
-- Redis: 100K concurrent connections
-- MongoDB: 10K concurrent connections
-- Node.js process: 4GB RAM
-- Worker concurrency: 5 jobs
-
-Estimated throughput:
-- Peak: 500-1000 messages/second
-- Average: 100-200 messages/second
-```
-
-### Optimization Strategies
-
-#### 1. **Database**
-```javascript
-// Indexes optimize queries:
-- userId + timestamp: Chat history queries
-- email: User lookup (unique)
-- TTL index on audit logs: Auto-cleanup
-```
-
-#### 2. **Caching**
-```javascript
-// Redis caching:
-- Rate limit counters (hot data)
-- Message velocity tracking
-- Cooldown flags
-- Session tokens (optional)
-```
-
-#### 3. **Queue Optimization**
-```javascript
-- Concurrency: 5 workers (tune based on load)
-- Batch processing: Optional for burst loads
-- Job expiry: 24 hours cleanup
-- Priority: High-priority jobs first
-```
-
-#### 4. **Frontend Optimization**
-```javascript
-- Message virtualization: Display only visible messages
-- Lazy loading: Load history on scroll
-- Code splitting: Separate route bundles
-- Image optimization: Progressive loading
-```
-
-### Horizontal Scaling
-
-```
-Load Balancer
-    ├─ Backend 1 (Express)
-    ├─ Backend 2 (Express)
-    ├─ Backend 3 (Express)
-    └─ Backend N (Express)
-
-Shared Resources:
-    ├─ MongoDB (Replica Set)
-    └─ Redis Cluster
-
-Workers:
-    ├─ Worker 1 (Bull)
-    ├─ Worker 2 (Bull)
-    └─ Worker N (Bull)
-```
-
-### Monitoring & Alerting
-
-```javascript
-// Metrics to track:
-- Queue depth (jobs waiting)
-- Worker error rate
-- Message processing time
-- Rate limit hits
-- Database connection pool
-- Redis memory usage
-- API response times
-- User concurrent sessions
-```
-
----
-
-## Summary
-
-This architecture provides:
-- ✅ **Real-time chat** with message queue
-- ✅ **Rate limiting** (5 msgs/min per user)
-- ✅ **Ban prevention** (multi-layer protection)
-- ✅ **Scalable** (horizontal expansion ready)
-- ✅ **Secure** (JWT auth, input validation)
-- ✅ **Maintainable** (modular services)
-- ✅ **Observable** (comprehensive logging)

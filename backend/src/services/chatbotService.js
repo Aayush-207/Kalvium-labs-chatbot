@@ -7,6 +7,12 @@ const chatbotResponses = {
   hi: 'Hello! How can I help you?',
   hello: 'Hello! How can I help you?',
   hey: 'Hello! How can I help you?',
+  
+
+  // Human Support (VERY IMPORTANT)
+  human: 'I can connect you to a human support agent. Please wait while I transfer your request.',
+  agent: 'Let me connect you to a support specialist. Please hold on.',
+  support: 'Our support team is available 24/7. Would you like me to connect you?',
 
   // Billing & Refunds
   refund: 'You can request a refund within 30 days of purchase. Please contact our support team for assistance.',
