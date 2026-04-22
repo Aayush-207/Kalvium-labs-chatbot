@@ -11,7 +11,6 @@ export default function ChatWindow() {
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [toast, setToast] = useState(null);
-  const [rateLimit, setRateLimit] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Load chat history on mount
@@ -69,13 +68,20 @@ export default function ChatWindow() {
       const response = await sendMessage(userMessage);
 
       if (response.success) {
-        // Update rate limit info
-        setRateLimit(response.info);
+        // Add both user and bot messages from response
+        if (response.message) {
+          setMessages((prev) => [...prev.slice(0, -1), response.message]);
+        }
+        
+        if (response.botMessage) {
+          setMessages((prev) => [...prev, response.botMessage]);
+          showToast('Response received!', 'success');
+        }
 
-        // Start polling for bot response
-        pollForBotResponse(response.message._id);
+        setIsTyping(false);
       } else {
         showToast('Failed to send message', 'error');
+        setIsTyping(false);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -100,52 +106,6 @@ export default function ChatWindow() {
     }
   };
 
-  const pollForBotResponse = async (userMessageId) => {
-    // Poll for response every 500ms for up to 30 seconds
-    let attempts = 0;
-    const maxAttempts = 60;
-
-    const poll = async () => {
-      try {
-        const data = await getChatHistory(10, 0);
-        const messages = data.messages || [];
-
-        // Find bot response after the user message
-        const botResponse = messages.find(
-          (msg) =>
-            msg.sender === 'bot' &&
-            msg.timestamp > new Date(Date.now() - 10000)
-        );
-
-        if (botResponse) {
-          setMessages((prev) => [...prev, botResponse]);
-          setIsTyping(false);
-          showToast('Response received!', 'success');
-          return;
-        }
-
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 500);
-        } else {
-          setIsTyping(false);
-          showToast(
-            'Timeout waiting for response',
-            'warning'
-          );
-        }
-      } catch (error) {
-        console.error('Polling error:', error);
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 1000);
-        }
-      }
-    };
-
-    poll();
-  };
-
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -167,9 +127,6 @@ export default function ChatWindow() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-800">Customer Support</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {rateLimit && `${rateLimit.remaining} messages remaining`}
-        </p>
       </div>
 
       {/* Messages Container */}

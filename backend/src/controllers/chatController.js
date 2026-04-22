@@ -75,27 +75,30 @@ export const sendMessage = async (req, res) => {
     // Track message velocity for anti-ban
     const velocity = await trackMessageVelocity(userId);
 
-    // Add to processing queue
-    const queueJob = await addMessageToQueue({
-      messageId: userMessage._id,
-      userId: userId.toString(),
-      text,
-      userMessageId: userMessage._id,
+    // Generate bot response immediately (no queue - bypasses Redis dependency)
+    const delay = getRandomDelay();
+    console.log(`[Chat] Generating response in ${Math.round(delay / 1000)}s...`);
+    
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    
+    const botResponse = generateBotResponse(text);
+    console.log(`[Chat] Generated response: "${botResponse}"`);
+    
+    const botMessage = await Message.create({
+      userId,
+      sender: 'bot',
+      text: botResponse,
     });
 
-    logMessageAction(userId, 'queued_for_processing', {
-      jobId: queueJob.id,
-      velocityCount: velocity.messageCount,
+    logMessageAction(userId, 'bot_response_sent', {
+      messageId: botMessage._id,
+      delay: Math.round(delay / 1000),
     });
 
     res.status(201).json({
       success: true,
       message: userMessage,
-      queueJobId: queueJob.id,
-      info: {
-        rateLimitRemaining: rateLimit.remaining,
-        delayEstimate: `${Math.round(getRandomDelay() / 1000)}s`,
-      },
+      botMessage: botMessage,
     });
   } catch (error) {
     console.error('Send message error:', error);

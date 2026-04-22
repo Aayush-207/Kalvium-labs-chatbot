@@ -6,11 +6,14 @@
 const chatbotResponses = {
   hi: 'Hello! How can I help you?',
   hello: 'Hello! How can I help you?',
+  // Subscription
   price: 'Our pricing starts at $10/month',
   pricing: 'Our pricing starts at $10/month',
   help: 'How can I assist you today?',
   thanks: 'You are welcome! Feel free to ask anything else.',
   thank: 'You are welcome! Feel free to ask anything else.',
+
+  default: 'I’m not sure I understood that. Could you rephrase or choose one of these topics: pricing, features, support?'
 };
 
 /**

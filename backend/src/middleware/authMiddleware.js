@@ -23,8 +23,7 @@ export const verifyToken = async (req, res, next) => {
     }
 
     // Update last activity
-    user.lastActivityAt = new Date();
-    await user.save();
+    await User.findByIdAndUpdate(user._id, { lastActivityAt: new Date() });
 
     // Attach user to request
     req.user = {

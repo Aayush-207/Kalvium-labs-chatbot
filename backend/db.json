@@ -7,9 +7,208 @@
       "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
       "photoURL": null,
       "createdAt": "2026-04-22T11:18:46.869Z",
-      "lastActivityAt": "2026-04-22T11:18:46.869Z",
-      "updatedAt": "2026-04-22T11:18:46.869Z"
+      "lastActivityAt": "2026-04-22T17:07:54.027Z",
+      "updatedAt": "2026-04-22T17:07:54.028Z"
     }
   ],
-  "messages": []
+  "messages": [
+    {
+      "_id": "8b14f544-70f5-41d5-bc42-8fdfce03bfd5",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:47:59.218Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:47:59.218Z",
+      "updatedAt": "2026-04-22T16:47:59.218Z"
+    },
+    {
+      "_id": "a4a8093d-26c4-4801-b047-bfa840d3e977",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hello",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:49:21.763Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:49:21.763Z",
+      "updatedAt": "2026-04-22T16:49:21.763Z"
+    },
+    {
+      "_id": "401bbf33-2921-4483-ab2c-362c7b6031c7",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:51:41.496Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:51:41.496Z",
+      "updatedAt": "2026-04-22T16:51:41.496Z"
+    },
+    {
+      "_id": "2742ce82-6f9c-4da1-a38d-e0c7a215f40b",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:52:55.418Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:52:55.418Z",
+      "updatedAt": "2026-04-22T16:52:55.418Z"
+    },
+    {
+      "_id": "73387994-f645-4de3-9fd5-a25e36819013",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:55:23.143Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:55:23.143Z",
+      "updatedAt": "2026-04-22T16:55:23.143Z"
+    },
+    {
+      "_id": "f28aa477-4d8e-47a2-967a-04e473f0b0ca",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Hello! How can I help you?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:55:27.489Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:55:27.489Z",
+      "updatedAt": "2026-04-22T16:55:27.489Z"
+    },
+    {
+      "_id": "fc36a9e5-0b4a-4807-a646-8e1a825d2f3b",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:57:47.653Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:57:47.653Z",
+      "updatedAt": "2026-04-22T16:57:47.653Z"
+    },
+    {
+      "_id": "0e30686b-b2d6-4776-b2d2-ad8d4bde41c6",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Hello! How can I help you?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:57:49.985Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:57:49.985Z",
+      "updatedAt": "2026-04-22T16:57:49.985Z"
+    },
+    {
+      "_id": "f43755e6-d636-4c2b-b10a-27906efaa2d9",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:58:23.358Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:58:23.358Z",
+      "updatedAt": "2026-04-22T16:58:23.358Z"
+    },
+    {
+      "_id": "779f74f4-24d0-465f-bb26-3c219b11c14f",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Hello! How can I help you?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T16:58:25.792Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T16:58:25.792Z",
+      "updatedAt": "2026-04-22T16:58:25.792Z"
+    },
+    {
+      "_id": "6ca5cb8b-1fd4-47a8-9319-53296356f90b",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:01:15.234Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:01:15.234Z",
+      "updatedAt": "2026-04-22T17:01:15.234Z"
+    },
+    {
+      "_id": "ffcfad13-0ba0-450f-9608-13528d47aaf3",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Hello! How can I help you?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:01:20.191Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:01:20.191Z",
+      "updatedAt": "2026-04-22T17:01:20.191Z"
+    },
+    {
+      "_id": "88241d6b-1dfd-4f57-b086-01876ec06a5d",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "hi",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:06:07.158Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:06:07.158Z",
+      "updatedAt": "2026-04-22T17:06:07.158Z"
+    },
+    {
+      "_id": "ddff9c2c-ef96-446b-96a1-02949b95972f",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Hello! How can I help you?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:06:11.604Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:06:11.604Z",
+      "updatedAt": "2026-04-22T17:06:11.604Z"
+    },
+    {
+      "_id": "88f5bcfb-3011-4275-afe5-e3e84573a49a",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "i need help",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:07:37.157Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:07:37.157Z",
+      "updatedAt": "2026-04-22T17:07:37.157Z"
+    },
+    {
+      "_id": "ccdce178-6e77-44a1-9ff4-985f8562c439",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "How can I assist you today?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:07:40.487Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:07:40.487Z",
+      "updatedAt": "2026-04-22T17:07:40.487Z"
+    },
+    {
+      "_id": "abef2afe-d572-4ac2-abb7-b98048f6abbb",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "user",
+      "text": "what are your pricings?",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:07:54.037Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:07:54.037Z",
+      "updatedAt": "2026-04-22T17:07:54.037Z"
+    },
+    {
+      "_id": "59b9ca4f-0e70-45dc-8bc5-21287dce05c0",
+      "userId": "db6f2fe8-0bf5-4eb6-a892-18fad1404941",
+      "sender": "bot",
+      "text": "Our pricing starts at $10/month",
+      "messageHash": null,
+      "timestamp": "2026-04-22T17:07:57.649Z",
+      "status": "sent",
+      "createdAt": "2026-04-22T17:07:57.649Z",
+      "updatedAt": "2026-04-22T17:07:57.649Z"
+    }
+  ]
 }

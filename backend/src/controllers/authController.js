@@ -108,7 +108,9 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(user);
+    // Don't return password hash
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
