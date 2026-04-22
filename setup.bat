@@ -35,7 +35,7 @@ cd backend
 if not exist ".env" (
     echo Creating .env from .env.example...
     copy .env.example .env
-    echo WARNING: Please fill in Firebase credentials in backend\.env
+    echo WARNING: Please fill in MongoDB, Redis, and JWT_SECRET in backend\.env
 )
 call npm install
 echo OK: Backend dependencies installed
@@ -47,7 +47,7 @@ echo Setting up Frontend...
 if not exist ".env.local" (
     echo Creating .env.local from .env.example...
     copy .env.example .env.local
-    echo WARNING: Please fill in Firebase config in frontend\.env.local
+    echo OK: Frontend .env.local created
 )
 call npm install
 echo OK: Frontend dependencies installed
@@ -58,13 +58,17 @@ echo   Setup Complete!
 echo ======================================
 echo.
 echo Next steps:
-echo 1. Edit backend\.env with Firebase credentials
-echo 2. Edit frontend\.env.local with Firebase config
-echo 3. Start MongoDB: mongod
-echo 4. Start Redis: redis-server
-echo 5. Start Backend: cd backend ^&^& npm run dev
-echo 6. Start Worker: cd backend ^&^& npm run worker:dev
-echo 7. Start Frontend: cd frontend ^&^& npm run dev
+echo 1. Edit backend\.env:
+echo    - MONGO_URI=mongodb://localhost:27017/chatbot
+echo    - REDIS_URL=redis://localhost:6379
+echo    - JWT_SECRET=your-secret-key
+echo.
+echo 2. Start MongoDB: mongod
+echo 3. Start Redis: redis-server
+echo 4. Start Backend: cd backend ^&^& npm run dev
+echo 5. Start Worker: cd backend ^&^& npm run worker:dev (in new terminal)
+echo 6. Start Frontend: cd frontend ^&^& npm run dev (in new terminal)
 echo.
 echo See QUICK_START.md for more details
 echo.
+

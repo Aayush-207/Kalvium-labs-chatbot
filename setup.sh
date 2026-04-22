@@ -31,7 +31,7 @@ cd backend
 if [ ! -f ".env" ]; then
     echo "Creating .env from .env.example..."
     cp .env.example .env
-    echo -e "${YELLOW}⚠️  Please fill in Firebase credentials in backend/.env${NC}"
+    echo -e "${YELLOW}⚠️  Please fill in MongoDB, Redis, and JWT_SECRET in backend/.env${NC}"
 fi
 npm install
 echo -e "${GREEN}✓ Backend dependencies installed${NC}\n"
@@ -42,7 +42,7 @@ echo -e "${YELLOW}Setting up Frontend...${NC}"
 if [ ! -f ".env.local" ]; then
     echo "Creating .env.local from .env.example..."
     cp .env.example .env.local
-    echo -e "${YELLOW}⚠️  Please fill in Firebase config in frontend/.env.local${NC}"
+    echo -e "${GREEN}✓ Frontend .env.local created${NC}"
 fi
 npm install
 echo -e "${GREEN}✓ Frontend dependencies installed${NC}\n"
@@ -50,11 +50,14 @@ echo -e "${GREEN}✓ Frontend dependencies installed${NC}\n"
 # Summary
 echo -e "${GREEN}✓ Setup Complete!${NC}\n"
 echo -e "${BLUE}Next steps:${NC}"
-echo "1. Edit backend/.env with Firebase credentials"
-echo "2. Edit frontend/.env.local with Firebase config"
-echo "3. Start MongoDB: mongod"
-echo "4. Start Redis: redis-server"
-echo "5. Run: npm run dev:all (from root)"
+echo "1. Edit backend/.env:"
+echo "   MONGO_URI=mongodb://localhost:27017/chatbot"
+echo "   REDIS_URL=redis://localhost:6379"
+echo "   JWT_SECRET=your-secret-key"
+echo ""
+echo "2. Start MongoDB: mongod"
+echo "3. Start Redis: redis-server"
+echo "4. Run: npm run dev:all (from root)"
 echo ""
 echo -e "${BLUE}Or use Docker:${NC}"
 echo "docker-compose up -d"
