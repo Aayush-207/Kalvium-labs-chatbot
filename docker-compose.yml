@@ -36,9 +36,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongodb:27017/chatbot
       REDIS_URL: redis://redis:6379
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
-      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
-      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
       NODE_ENV: development
     networks:
       - chatbot-network

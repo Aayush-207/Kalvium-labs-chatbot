@@ -1,10 +1,10 @@
-import initializeFirebase from '../config/firebase.js';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 /**
- * Middleware to verify Firebase ID token and attach user info
+ * Middleware to verify JWT token and attach user info
  */
-export const verifyFirebaseToken = async (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -12,22 +12,14 @@ export const verifyFirebaseToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Missing or invalid authorization header' });
     }
 
-    const idToken = authHeader.substring(7);
-    const auth = initializeFirebase();
-    const decodedToken = await auth.verifyIdToken(idToken);
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
-    const firebaseUid = decodedToken.uid;
-
-    // Find or create user in database
-    let user = await User.findOne({ firebaseUid });
+    // Find user in database
+    const user = await User.findById(decoded.userId);
 
     if (!user) {
-      user = await User.create({
-        firebaseUid,
-        name: decodedToken.name || decodedToken.email.split('@')[0],
-        email: decodedToken.email,
-        photoURL: decodedToken.picture,
-      });
+      return res.status(401).json({ error: 'User not found' });
     }
 
     // Update last activity
@@ -37,14 +29,13 @@ export const verifyFirebaseToken = async (req, res, next) => {
     // Attach user to request
     req.user = {
       _id: user._id,
-      firebaseUid,
       name: user.name,
       email: user.email,
     };
 
     next();
   } catch (error) {
-    console.error('Firebase verification error:', error);
+    console.error('Token verification error:', error);
     res.status(401).json({ error: 'Unauthorized' });
   }
 };

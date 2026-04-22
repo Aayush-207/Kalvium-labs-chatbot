@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import { connectRedis } from './config/redis.js';
-import { verifyFirebaseToken } from './middleware/authMiddleware.js';
+import { verifyToken } from './middleware/authMiddleware.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -30,7 +30,7 @@ app.get('/health', (req, res) => {
  * API Routes
  */
 app.use('/api/auth', authRoutes);
-app.use('/api/chat', verifyFirebaseToken, chatRoutes);
+app.use('/api/chat', verifyToken, chatRoutes);
 
 /**
  * Stats endpoint

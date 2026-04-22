@@ -31,14 +31,11 @@ docker run -d -p 27017:27017 mongo:latest
 mongod
 ```
 
-### 5. Firebase Setup
-1. Create a Firebase project
-2. Enable Google authentication
-3. Get your credentials from Firebase Console
-4. Add to `.env`:
-   - `FIREBASE_PROJECT_ID`
-   - `FIREBASE_PRIVATE_KEY`
-   - `FIREBASE_CLIENT_EMAIL`
+### 5. Environment Setup
+Add to `.env`:
+   - `MONGO_URI` - MongoDB connection string
+   - `REDIS_URL` - Redis connection string
+   - `JWT_SECRET` - Secret key for JWT tokens
 
 ### 6. Start Backend Server
 ```bash
@@ -55,7 +52,8 @@ npm run worker:dev
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/verify` - Verify Firebase token
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
 - `GET /api/auth/me` - Get current user
 - `PUT /api/auth/profile` - Update profile
 - `DELETE /api/auth/account` - Delete account
@@ -86,7 +84,7 @@ npm run worker:dev
 6. Bot response generated and saved
 
 ## Features
-✓ Firebase Google Authentication
+✓ JWT Authentication
 ✓ Message Queue with artificial delays
 ✓ Rate Limiting (5 msgs/min per user)
 ✓ Anti-ban protection

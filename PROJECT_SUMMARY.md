@@ -12,7 +12,7 @@ This is a **production-ready** full-stack Customer Support Chatbot with **messag
 - [x] Express.js server with proper middleware
 - [x] MongoDB with Mongoose ORM
 - [x] Redis for caching and queuing
-- [x] Firebase Authentication integration
+- [x] JWT Authentication
 - [x] Message Queue (BullMQ) with workers
 - [x] Rate limiting (5 messages/min per user)
 - [x] Anti-ban protection system

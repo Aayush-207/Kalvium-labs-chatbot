@@ -1,19 +1,20 @@
 import express from 'express';
-import { getCurrentUser, updateProfile, deleteAccount } from '../controllers/authController.js';
-import { verifyFirebaseToken, requireAuth } from '../middleware/authMiddleware.js';
+import { login, register, getCurrentUser, updateProfile, deleteAccount } from '../controllers/authController.js';
+import { verifyToken, requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 /**
- * Verify token and get/create user
- * POST /api/auth/verify
+ * User registration
+ * POST /api/auth/register
  */
-router.post('/verify', verifyFirebaseToken, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user,
-  });
-});
+router.post('/register', register);
+
+/**
+ * User login
+ * POST /api/auth/login
+ */
+router.post('/login', login);
 
 /**
  * Get current user profile

@@ -1,10 +1,10 @@
 # 🚀 Customer Support Chatbot with Message Queue & Rate Limiting
 
-A production-ready full-stack chatbot application with **message queuing**, **rate limiting**, and **ban avoidance mechanisms**. Built with Next.js, Express.js, MongoDB, Redis, and Firebase Authentication.
+A production-ready full-stack chatbot application with **message queuing**, **rate limiting**, and **ban avoidance mechanisms**. Built with Next.js, Express.js, MongoDB, Redis, and JWT Authentication.
 
 ## 📋 Features
 
-✅ **Google Sign-In** with Firebase Authentication  
+✅ **User Authentication** with JWT  
 ✅ **Real-time Chat UI** similar to WhatsApp (user vs bot bubbles)  
 ✅ **Message Queue System** with artificial delays (2-5s per message)  
 ✅ **Rate Limiting** (5 messages per minute per user)  
@@ -58,7 +58,7 @@ root/
 │   │   ├── config/            # Database & service configs
 │   │   │   ├── db.js
 │   │   │   ├── redis.js
-│   │   │   └── firebase.js
+│   
 │   │   ├── models/            # Mongoose schemas
 │   │   │   ├── User.js
 │   │   │   └── Message.js
@@ -95,7 +95,6 @@ root/
 - **React 18** - UI library
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
-- **Firebase** - Google authentication
 - **Axios** - HTTP client
 
 ### Backend
@@ -105,7 +104,7 @@ root/
 - **Mongoose** - ODM for MongoDB
 - **Redis** - Caching & message queue
 - **BullMQ** - Job queue library
-- **Firebase Admin** - Token verification
+- **JWT** - Token verification
 
 ---
 
@@ -115,7 +114,6 @@ root/
 - Node.js 18+ and npm/yarn
 - MongoDB (local or Atlas)
 - Redis (local or Cloud)
-- Firebase Project with Google Auth enabled
 
 ### Step 1: Clone & Install
 
@@ -143,9 +141,7 @@ Fill in:
 ```env
 MONGO_URI=mongodb://localhost:27017/chatbot
 REDIS_URL=redis://localhost:6379
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY=your-private-key
-FIREBASE_CLIENT_EMAIL=your-client-email
+JWT_SECRET=your-secret-key-change-in-production
 PORT=5000
 NODE_ENV=development
 ```
@@ -155,15 +151,9 @@ NODE_ENV=development
 cp frontend/.env.example frontend/.env.local
 ```
 
-Fill in Firebase config from [Firebase Console](https://console.firebase.google.com/):
+Fill in:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_FIREBASE_API_KEY=xxx
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
-NEXT_PUBLIC_FIREBASE_APP_ID=xxx
 ```
 
 ### Step 3: Start Services
@@ -215,7 +205,8 @@ Frontend: `http://localhost:3000` ✓
 ## 📡 API Endpoints
 
 ### Authentication
-- `POST /api/auth/verify` - Verify Firebase token
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
 - `GET /api/auth/me` - Get current user profile
 - `PUT /api/auth/profile` - Update user profile
 - `DELETE /api/auth/account` - Delete account

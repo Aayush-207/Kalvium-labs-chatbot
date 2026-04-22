@@ -9,33 +9,32 @@ const AuthContext = React.createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [idToken, setIdToken] = useState(null);
+  const [token, setToken] = useState(null);
 
   // Check authentication on mount
   useEffect(() => {
-    const token = localStorage.getItem('idToken');
-    if (token) {
-      setIdToken(token);
-      verifyUser(token);
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      setToken(savedToken);
+      verifyUser(savedToken);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const verifyUser = async (token) => {
+  const verifyUser = async (authToken) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`,
-        {},
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${authToken}` },
         }
       );
-      setUser(response.data.user);
+      setUser(response.data);
     } catch (error) {
       console.error('Verification error:', error);
-      localStorage.removeItem('idToken');
-      setIdToken(null);
+      localStorage.removeItem('token');
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -43,12 +42,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    setIdToken(null);
-    localStorage.removeItem('idToken');
+    setToken(null);
+    localStorage.removeItem('token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, idToken, loading, logout, setIdToken, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, logout, setToken, setUser }}>
       {children}
     </AuthContext.Provider>
   );

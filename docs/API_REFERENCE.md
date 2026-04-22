@@ -6,30 +6,36 @@ http://localhost:5000
 ```
 
 ## Authentication
-All endpoints (except `/health`) require Firebase ID token in header:
+All endpoints (except `/health` and `/api/auth/register`/`/api/auth/login`) require JWT token in header:
 ```
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 ---
 
 ## Authentication Endpoints
 
-### 1. Verify Firebase Token
-Verify and create/update user in database.
+### 1. Register User
+Create a new user account.
 
 ```http
-POST /api/auth/verify
-Authorization: Bearer {idToken}
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "secure-password"
+}
 ```
 
 **Response:**
 ```json
 {
   "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
   "user": {
     "_id": "607f1f77bcf86cd799439011",
-    "firebaseUid": "user-123",
     "name": "John Doe",
     "email": "john@example.com"
   }
@@ -37,26 +43,59 @@ Authorization: Bearer {idToken}
 ```
 
 **Status Codes:**
-- `200` - Token verified successfully
-- `401` - Invalid or missing token
+- `201` - User registered successfully
+- `400` - Invalid request
+- `409` - User already exists
 - `500` - Server error
 
 ---
 
-### 2. Get Current User Profile
+### 2. Login User
+Authenticate and get JWT token.
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "secure-password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "_id": "607f1f77bcf86cd799439011",
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}
+```
+
+**Status Codes:**
+- `200` - Login successful
+- `400` - Invalid request
+- `401` - Invalid credentials
+- `500` - Server error
+
+---
+
+### 3. Get Current User Profile
 ```http
 GET /api/auth/me
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 **Response:**
 ```json
 {
   "_id": "607f1f77bcf86cd799439011",
-  "firebaseUid": "user-123",
   "name": "John Doe",
   "email": "john@example.com",
-  "photoURL": "https://example.com/photo.jpg",
   "createdAt": "2024-04-20T10:30:00.000Z",
   "lastActivityAt": "2024-04-21T15:45:00.000Z",
   "updatedAt": "2024-04-21T15:45:00.000Z"
@@ -71,10 +110,10 @@ Authorization: Bearer {idToken}
 
 ---
 
-### 3. Update User Profile
+### 4. Update User Profile
 ```http
 PUT /api/auth/profile
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 Content-Type: application/json
 
 {
@@ -86,10 +125,8 @@ Content-Type: application/json
 ```json
 {
   "_id": "607f1f77bcf86cd799439011",
-  "firebaseUid": "user-123",
   "name": "Jane Doe",
-  "email": "john@example.com",
-  "photoURL": "https://example.com/photo.jpg"
+  "email": "john@example.com"
 }
 ```
 
@@ -101,12 +138,12 @@ Content-Type: application/json
 
 ---
 
-### 4. Delete Account
+### 5. Delete Account
 Deletes user and all associated messages.
 
 ```http
 DELETE /api/auth/account
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 **Response:**
@@ -130,7 +167,7 @@ Send a message to the chatbot. Subject to rate limiting and anti-ban checks.
 
 ```http
 POST /api/chat/send
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 Content-Type: application/json
 
 {
@@ -210,7 +247,7 @@ Retrieve paginated chat history for current user.
 
 ```http
 GET /api/chat/history?limit=50&skip=0
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 **Query Parameters:**
@@ -256,7 +293,7 @@ Retrieve a specific message by ID.
 
 ```http
 GET /api/chat/message/607f1f77bcf86cd799439012
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 **Response:**
@@ -306,7 +343,7 @@ Get server statistics.
 
 ```http
 GET /api/stats
-Authorization: Bearer {idToken}
+Authorization: Bearer {jwtToken}
 ```
 
 **Response:**
@@ -362,9 +399,22 @@ Responses include rate limit info:
 
 ### Using cURL
 
-**Login (get token first via Firebase)**
+**Login and get JWT token**
 ```bash
-TOKEN="your-firebase-id-token"
+# Register new user
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John","email":"john@example.com","password":"pass123"}' \
+  http://localhost:5000/api/auth/register
+
+# Or login with existing credentials
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"pass123"}' \
+  http://localhost:5000/api/auth/login
+
+# Store the returned token
+TOKEN="eyJhbGciOiJIUzI1NiIs..."
 
 # Get current user
 curl -H "Authorization: Bearer $TOKEN" \
@@ -388,7 +438,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000';
-const token = localStorage.getItem('idToken');
+const token = localStorage.getItem('token');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -396,6 +446,15 @@ const api = axios.create({
     Authorization: `Bearer ${token}`,
   },
 });
+
+// Register new user
+const registerResponse = await api.post('/api/auth/register', {
+  name: 'John Doe',
+  email: 'john@example.com',
+  password: 'secure-password',
+});
+const token = registerResponse.data.token;
+localStorage.setItem('token', token);
 
 // Send message
 const response = await api.post('/api/chat/send', {
