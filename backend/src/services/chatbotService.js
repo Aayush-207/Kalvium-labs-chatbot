@@ -6,9 +6,26 @@
 const chatbotResponses = {
   hi: 'Hello! How can I help you?',
   hello: 'Hello! How can I help you?',
+  hey: 'Hello! How can I help you?',
+
+  // Billing & Refunds
+  refund: 'You can request a refund within 30 days of purchase. Please contact our support team for assistance.',
+  billing: 'For billing inquiries, please visit your account settings or contact our support team.',
+  invoice: 'You can view and download your invoices from your account dashboard.',
+  payment: 'We accept all major credit cards and PayPal for payments.',
+
   // Subscription
   price: 'Our pricing starts at $10/month',
   pricing: 'Our pricing starts at $10/month',
+  subscription: 'Our subscription plans start at $10/month',
+  cancel: 'You can cancel your subscription anytime from your account settings.',
+  upgrade: 'You can upgrade your plan anytime to unlock more features.',
+  downgrade: 'Downgrades are supported and will reflect in your next billing cycle.',
+
+  // Demo / Sales
+  demo: 'We can schedule a demo for you. Please share your preferred time.',
+  trial: 'We offer a free trial for 7 days. Would you like to start now?',
+
   help: 'How can I assist you today?',
   thanks: 'You are welcome! Feel free to ask anything else.',
   thank: 'You are welcome! Feel free to ask anything else.',
