@@ -177,16 +177,7 @@ cd backend
 npm run worker:dev
 ```
 
-### Step 6: Start Frontend (new terminal)
 
-```bash
-cd frontend
-npm run dev
-```
-
-Frontend: `http://localhost:3000` ✓
-
----
 
 ## 📡 API Endpoints
 
