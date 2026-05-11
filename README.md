@@ -273,34 +273,6 @@ const chatbotResponses = {
 
 ---
 
-## 📊 Database Schema
-
-### User
-```javascript
-{
-  _id: ObjectId,
-  name: String,           // Display name
-  email: String,          // Email (unique)
-  password: String,       // Hashed password (SHA256)
-  createdAt: Date,
-  lastActivityAt: Date
-}
-```
-
-### Message
-```javascript
-{
-  _id: ObjectId,
-  userId: ObjectId,       // Reference to User
-  sender: "user" | "bot",
-  text: String,           // Message content
-  messageHash: String,    // For duplicate detection
-  timestamp: Date,
-  status: "sent" | "failed"
-}
-```
-
----
 
 ## 📚 Documentation
 
